@@ -6,8 +6,12 @@ export type JwtPayload = {
   role: 'user' | 'admin'
 }
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'test') {
+  throw new Error('JWT_SECRET environment variable is missing')
+}
+
 const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'default-secret-key-at-least-32-chars-long-for-hs256'
+  process.env.JWT_SECRET || 'test-secret-key-at-least-32-chars-long-for-hs256'
 )
 
 export async function signToken(payload: JwtPayload): Promise<string> {

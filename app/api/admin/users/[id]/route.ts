@@ -40,9 +40,16 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     }
 
     // ============================================================================
-    // STEP 3: Delete user
+    // STEP 3: Delete user (blocking last admin deletion)
     // ============================================================================
     await connectDB()
+    const targetUser = await UserModel.findOne({ _id: id })
+    if (targetUser && targetUser.role === 'admin') {
+      const adminCount = await UserModel.countDocuments({ role: 'admin' })
+      if (adminCount <= 1) {
+        return NextResponse.json({ error: 'Cannot delete the last admin user' }, { status: 400 })
+      }
+    }
     const deleted = await UserModel.findOneAndDelete({ _id: id }).lean()
 
     const duration = Date.now() - startTime

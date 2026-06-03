@@ -16,8 +16,9 @@ import { fetchTrades, selectClosedTrades, selectTradesStatus } from '@/store/tra
 import { getMonthlyCalendarData } from '@/lib/calculations'
 import { formatCurrency } from '@/lib/formatters'
 import { addToast } from '@/store/uiSlice'
-import type { Mood } from '@/types/journal'
+import type { Mood, PreSessionChecklist } from '@/types/journal'
 import JournalSkeleton from '@/components/ui/skeletons/JournalSkeleton'
+import { PreSessionChecklist as PreSessionChecklistUI } from '@/components/ui/PreSessionChecklist'
 
 const MOODS: { value: Mood; emoji: string; label: string }[] = [
   { value: 'great', emoji: '🚀', label: 'Great' },
@@ -56,6 +57,8 @@ function JournalContent() {
   const [mood, setMood] = useState<Mood>(entry?.mood ?? 'neutral')
   const [goal, setGoal] = useState(entry?.dailyGoal ?? '')
   const [lesson, setLesson] = useState(entry?.lessonLearned ?? '')
+  const [checklist, setChecklist] = useState<PreSessionChecklist | null>(entry?.preSessionChecklist ?? null)
+  const [mentalScore, setMentalScore] = useState<number | null>(entry?.mentalScore ?? null)
   const [saving, setSaving] = useState(false)
 
   const monthStats = getMonthlyCalendarData(trades, calYear, calMonth)
@@ -71,11 +74,17 @@ function JournalContent() {
     setMood(e?.mood ?? 'neutral')
     setGoal(e?.dailyGoal ?? '')
     setLesson(e?.lessonLearned ?? '')
+    setChecklist(e?.preSessionChecklist ?? null)
+    setMentalScore(e?.mentalScore ?? null)
   }
 
   async function handleSave() {
     setSaving(true)
-    dispatch(upsertJournalEntry({ date: selectedDate, content, mood, dailyGoal: goal, lessonLearned: lesson }))
+    dispatch(upsertJournalEntry({
+      date: selectedDate, content, mood, dailyGoal: goal, lessonLearned: lesson,
+      preSessionChecklist: checklist,
+      mentalScore,
+    }))
     dispatch(addToast({ message: 'Journal entry saved', type: 'success' }))
     setTimeout(() => setSaving(false), 500)
   }
@@ -128,6 +137,14 @@ function JournalContent() {
               </div>
             </div>
           )}
+
+          {/* Pre-session checklist */}
+          <PreSessionChecklistUI
+            value={checklist}
+            mentalScore={mentalScore}
+            onChange={setChecklist}
+            onScoreChange={setMentalScore}
+          />
 
           {/* Mood */}
           <div className="card p-4">

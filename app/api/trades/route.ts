@@ -105,11 +105,35 @@ export async function POST(req: NextRequest) {
     // ============================================================================
     // STEP 1: Parse and validate request body
     // ============================================================================
-    const body: Partial<TradeDocument> = await req.json()
+    const rawBody: Partial<TradeDocument> = await req.json()
     const userId = req.headers.get('x-user-id')
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Whitelist user-submitted fields to prevent mass assignment
+    const body = {
+      ticker: rawBody.ticker,
+      assetClass: rawBody.assetClass,
+      direction: rawBody.direction,
+      status: rawBody.status,
+      entryDateTime: rawBody.entryDateTime,
+      entryPrice: rawBody.entryPrice,
+      exitDateTime: rawBody.exitDateTime,
+      exitPrice: rawBody.exitPrice,
+      quantity: rawBody.quantity,
+      stopLoss: rawBody.stopLoss,
+      takeProfit: rawBody.takeProfit,
+      commission: rawBody.commission,
+      fees: rawBody.fees,
+      tags: rawBody.tags,
+      setup: rawBody.setup,
+      journalNotes: rawBody.journalNotes,
+      screenshot: rawBody.screenshot,
+      emotionTag: rawBody.emotionTag,
+      processGrade: rawBody.processGrade,
+      mistakeType: rawBody.mistakeType,
     }
 
     if (!body.ticker || !body.direction || !body.entryDateTime || !body.entryPrice || !body.quantity) {

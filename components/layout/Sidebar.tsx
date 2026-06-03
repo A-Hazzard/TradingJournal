@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, List, BookOpen, BarChart2, PlusCircle,
   TrendingUp, ChevronLeft, ChevronRight, LogOut, Shield,
-  User as UserIcon,
+  User as UserIcon, ShieldAlert, BookMarked, Trophy, Upload, Settings,
 } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '@/store'
 import { toggleSidebar, selectSidebarCollapsed } from '@/store/uiSlice'
@@ -23,8 +23,13 @@ type CurrentUser = {
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/trades', label: 'Trade Log', Icon: List },
+  { href: '/import', label: 'Import', Icon: Upload },
   { href: '/journal', label: 'Daily Journal', Icon: BookOpen },
   { href: '/reports', label: 'Reports', Icon: BarChart2 },
+  { href: '/playbook', label: 'Playbook', Icon: BookMarked },
+  { href: '/risk', label: 'Risk', Icon: ShieldAlert },
+  { href: '/challenges', label: 'Challenges', Icon: Trophy },
+  { href: '/settings', label: 'Settings', Icon: Settings },
 ]
 
 function NavItem({ href, label, Icon, collapsed }: { href: string; label: string; Icon: React.FC<{ size?: number; className?: string }>; collapsed: boolean }) {

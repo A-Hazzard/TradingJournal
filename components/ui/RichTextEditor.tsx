@@ -40,6 +40,7 @@ export function RichTextEditor({ content, onChange, placeholder = 'Write your no
     ],
     content,
     editable: !readOnly,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => onChange?.(editor.getHTML()),
   })
 

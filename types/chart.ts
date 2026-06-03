@@ -52,3 +52,43 @@ export type TickerStat = {
   totalPnl: number
   avgPnl: number
 }
+
+// ── Advanced Analytics ───────────────────────────────────────────────────────
+
+export type HourStat = {
+  hour: number
+  hourLabel: string
+  avgPnl: number
+  totalPnl: number
+  count: number
+}
+
+export type DayOfWeekStat = {
+  day: string
+  shortDay: string
+  count: number
+  wins: number
+  winRate: number
+  avgPnl: number
+  totalPnl: number
+}
+
+export type DurationStat = {
+  label: string
+  count: number
+  avgPnl: number
+  totalPnl: number
+}
+
+export type RollingExpectancyPoint = {
+  date: string
+  tradeIndex: number
+  expectancy: number
+}
+
+export type StreakStats = {
+  currentStreak: number
+  currentStreakType: 'win' | 'loss' | 'none'
+  bestWinStreak: number
+  worstLossStreak: number
+}

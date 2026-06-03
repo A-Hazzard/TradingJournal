@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 import { Bell, CheckCircle, Info, X, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 
 type NotificationItem = {

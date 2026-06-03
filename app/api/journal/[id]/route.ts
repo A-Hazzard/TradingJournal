@@ -93,7 +93,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     // ============================================================================
     // STEP 2: Parse request body
     // ============================================================================
-    const body: Partial<JournalDocument> = await req.json()
+    const rawBody: Partial<JournalDocument> = await req.json()
+    const body: Partial<JournalDocument> = {}
+    if (rawBody.content !== undefined) body.content = rawBody.content
+    if (rawBody.mood !== undefined) body.mood = rawBody.mood
+    if (rawBody.dailyGoal !== undefined) body.dailyGoal = rawBody.dailyGoal
+    if (rawBody.lessonLearned !== undefined) body.lessonLearned = rawBody.lessonLearned
+    if (rawBody.preSessionChecklist !== undefined) body.preSessionChecklist = rawBody.preSessionChecklist
+    if (rawBody.mentalScore !== undefined) body.mentalScore = rawBody.mentalScore
 
     // ============================================================================
     // STEP 3: Connect to database

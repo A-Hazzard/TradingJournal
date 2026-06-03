@@ -91,9 +91,9 @@ export async function POST(req: NextRequest) {
     // ============================================================================
     // STEP 1: Parse and validate request body
     // ============================================================================
-    const body: Partial<JournalDocument> = await req.json()
+    const rawBody: Partial<JournalDocument> = await req.json()
 
-    if (!body.date) {
+    if (!rawBody.date) {
       return NextResponse.json({ error: 'date is required' }, { status: 400 })
     }
 
@@ -109,7 +109,17 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const { date, ...rest } = body
+    
+    const date = rawBody.date
+    const rest = {
+      content: rawBody.content,
+      mood: rawBody.mood,
+      dailyGoal: rawBody.dailyGoal,
+      lessonLearned: rawBody.lessonLearned,
+      preSessionChecklist: rawBody.preSessionChecklist,
+      mentalScore: rawBody.mentalScore,
+    }
+
     const entry = await JournalModel.findOneAndUpdate(
       { userId, date },
       { $set: { userId, date, ...rest } },

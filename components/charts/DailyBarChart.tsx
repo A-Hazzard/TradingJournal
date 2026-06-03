@@ -1,12 +1,13 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
+import type { TooltipProps } from 'recharts'
 import type { DailyBarPoint } from '@/types/chart'
 import { formatCurrency } from '@/lib/formatters'
 
 interface Props { data: DailyBarPoint[]; height?: number }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
   const pnl = payload[0]?.value as number
   return (

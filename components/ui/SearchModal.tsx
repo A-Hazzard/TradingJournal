@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Modal } from './Modal'
-import { Search, Calendar, FileText, ArrowRight } from 'lucide-react'
+import { Search, Calendar, ArrowRight } from 'lucide-react'
 import { useAppDispatch } from '@/store'
 import { addToast } from '@/store/uiSlice'
 
@@ -153,7 +153,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
           </div>
         ) : flatResults.length === 0 && !loading ? (
           <div className="py-12 px-6 text-center text-text-muted text-sm">
-            No matches found for <span className="font-semibold text-text-primary">"{query}"</span>
+            No matches found for <span className="font-semibold text-text-primary">&quot;{query}&quot;</span>
           </div>
         ) : (
           <div className="max-h-[380px] overflow-y-auto p-2 space-y-4">

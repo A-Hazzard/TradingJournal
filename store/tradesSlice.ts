@@ -1,6 +1,9 @@
 import { createSlice, createSelector, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import type { Trade, TradeFilters, KpiSummary } from '@/types/trade'
-import type { CumulativePnlPoint, DailyBarPoint, ScatterPoint, RadarDataPoint, SetupStat, TickerStat } from '@/types/chart'
+import type {
+  CumulativePnlPoint, DailyBarPoint, ScatterPoint, RadarDataPoint, SetupStat, TickerStat,
+  HourStat, DayOfWeekStat, DurationStat, RollingExpectancyPoint, StreakStats,
+} from '@/types/chart'
 import {
   computeKpis,
   filterTrades,
@@ -10,6 +13,11 @@ import {
   buildRadarData,
   buildSetupStats,
   buildTickerStats,
+  buildPnlByHour,
+  buildPnlByDayOfWeek,
+  buildPnlByDuration,
+  buildRollingExpectancy,
+  computeStreakStats,
 } from '@/lib/calculations'
 
 // ── Async Thunks ───────────────────────────────────────────────────────────
@@ -225,3 +233,58 @@ export const selectTickerStats = createSelector(
 
 export const selectTradeById = (id: string) =>
   createSelector([selectAllTrades], (trades) => trades.find((trade) => trade.id === id))
+
+// ── Advanced Analytics selectors ─────────────────────────────────────────────
+
+export const selectPnlByHour = createSelector(
+  [selectFilteredTrades],
+  (trades): HourStat[] => buildPnlByHour(trades)
+)
+
+export const selectPnlByDayOfWeek = createSelector(
+  [selectFilteredTrades],
+  (trades): DayOfWeekStat[] => buildPnlByDayOfWeek(trades)
+)
+
+export const selectPnlByDuration = createSelector(
+  [selectFilteredTrades],
+  (trades): DurationStat[] => buildPnlByDuration(trades)
+)
+
+export const selectRollingExpectancy = createSelector(
+  [selectFilteredTrades],
+  (trades): RollingExpectancyPoint[] => buildRollingExpectancy(trades)
+)
+
+export const selectStreakStats = createSelector(
+  [selectFilteredTrades],
+  (trades): StreakStats => computeStreakStats(trades)
+)
+
+// ── Risk selectors ───────────────────────────────────────────────────────────
+
+export const selectRMultipleDistribution = createSelector(
+  [selectClosedTrades],
+  (trades) => {
+    const order = ['≤-3R', '-2R', '-1R', '0R', '+1R', '+2R', '+3R', '+4R+']
+    const counts = new Map<string, number>(order.map((k) => [k, 0]))
+    trades.forEach((t) => {
+      if (t.rMultiple == null) return
+      const r = t.rMultiple
+      let key: string
+      if (r <= -3) key = '≤-3R'
+      else if (r >= 4) key = '+4R+'
+      else {
+        const rounded = Math.round(r)
+        key = `${rounded > 0 ? '+' : ''}${rounded}R`
+      }
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    })
+    return order.map((bucket) => ({ bucket, count: counts.get(bucket) ?? 0 }))
+  }
+)
+
+export const selectExpectancy = createSelector(
+  [selectClosedTrades],
+  (trades) => (trades.length === 0 ? 0 : trades.reduce((s, t) => s + t.pnl, 0) / trades.length)
+)

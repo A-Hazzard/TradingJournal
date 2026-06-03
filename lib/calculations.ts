@@ -6,6 +6,11 @@ import type {
   RadarDataPoint,
   SetupStat,
   TickerStat,
+  HourStat,
+  DayOfWeekStat,
+  DurationStat,
+  RollingExpectancyPoint,
+  StreakStats,
 } from '@/types/chart'
 import type { DailyStats } from '@/types/journal'
 
@@ -303,6 +308,159 @@ export function buildTickerStats(trades: Trade[]): TickerStat[] {
       avgPnl: parseFloat((totalPnl / ts.length).toFixed(2)),
     }
   }).sort((a, b) => b.totalPnl - a.totalPnl)
+}
+
+// ── Advanced Analytics ───────────────────────────────────────────────────────
+
+function formatHourLabel(hour: number): string {
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const display = hour % 12 === 0 ? 12 : hour % 12
+  return `${display}${period}`
+}
+
+export function buildPnlByHour(trades: Trade[]): HourStat[] {
+  const closed = trades.filter((t) => t.status === 'CLOSED')
+  const map = new Map<number, { totalPnl: number; count: number }>()
+  closed.forEach((t) => {
+    const hour = new Date(t.entryDateTime).getHours()
+    const prev = map.get(hour) ?? { totalPnl: 0, count: 0 }
+    map.set(hour, { totalPnl: prev.totalPnl + t.pnl, count: prev.count + 1 })
+  })
+  return Array.from(map.entries())
+    .map(([hour, data]) => ({
+      hour,
+      hourLabel: formatHourLabel(hour),
+      avgPnl: data.count > 0 ? parseFloat((data.totalPnl / data.count).toFixed(2)) : 0,
+      totalPnl: parseFloat(data.totalPnl.toFixed(2)),
+      count: data.count,
+    }))
+    .sort((a, b) => a.hour - b.hour)
+}
+
+export function buildPnlByDayOfWeek(trades: Trade[]): DayOfWeekStat[] {
+  const closed = trades.filter((t) => t.status === 'CLOSED')
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  return [1, 2, 3, 4, 5].map((idx) => {
+    const dayTrades = closed.filter((t) => new Date(t.entryDateTime).getDay() === idx)
+    const wins = dayTrades.filter((t) => t.pnl > 0).length
+    const totalPnl = dayTrades.reduce((s, t) => s + t.pnl, 0)
+    return {
+      day: days[idx],
+      shortDay: shortDays[idx],
+      count: dayTrades.length,
+      wins,
+      winRate: dayTrades.length ? (wins / dayTrades.length) * 100 : 0,
+      avgPnl: dayTrades.length ? parseFloat((totalPnl / dayTrades.length).toFixed(2)) : 0,
+      totalPnl: parseFloat(totalPnl.toFixed(2)),
+    }
+  })
+}
+
+export function buildPnlByDuration(trades: Trade[]): DurationStat[] {
+  const closed = trades.filter((t) => t.status === 'CLOSED' && t.holdingDurationMs != null)
+  const buckets = [
+    { label: '< 5m', min: 0, max: 5 * 60 * 1000 },
+    { label: '5–30m', min: 5 * 60 * 1000, max: 30 * 60 * 1000 },
+    { label: '30m–2h', min: 30 * 60 * 1000, max: 2 * 60 * 60 * 1000 },
+    { label: '2–8h', min: 2 * 60 * 60 * 1000, max: 8 * 60 * 60 * 1000 },
+    { label: '> 8h', min: 8 * 60 * 60 * 1000, max: Infinity },
+  ]
+  return buckets.map((bucket) => {
+    const inBucket = closed.filter(
+      (t) => t.holdingDurationMs! >= bucket.min && t.holdingDurationMs! < bucket.max
+    )
+    const totalPnl = inBucket.reduce((s, t) => s + t.pnl, 0)
+    return {
+      label: bucket.label,
+      count: inBucket.length,
+      avgPnl: inBucket.length ? parseFloat((totalPnl / inBucket.length).toFixed(2)) : 0,
+      totalPnl: parseFloat(totalPnl.toFixed(2)),
+    }
+  })
+}
+
+export function buildRollingExpectancy(trades: Trade[], windowSize = 20): RollingExpectancyPoint[] {
+  const closed = trades
+    .filter((t) => t.status === 'CLOSED')
+    .sort((a, b) => new Date(a.entryDateTime).getTime() - new Date(b.entryDateTime).getTime())
+
+  if (closed.length < windowSize) return []
+
+  const points: RollingExpectancyPoint[] = []
+  for (let i = windowSize; i <= closed.length; i++) {
+    const window = closed.slice(i - windowSize, i)
+    const expectancy = window.reduce((s, t) => s + t.pnl, 0) / windowSize
+    points.push({
+      date: formatChartDate(closed[i - 1].entryDateTime.slice(0, 10)),
+      tradeIndex: i,
+      expectancy: parseFloat(expectancy.toFixed(2)),
+    })
+  }
+  return points
+}
+
+export function computeStreakStats(trades: Trade[]): StreakStats {
+  const closed = trades
+    .filter((t) => t.status === 'CLOSED')
+    .sort((a, b) => new Date(a.entryDateTime).getTime() - new Date(b.entryDateTime).getTime())
+
+  if (closed.length === 0) {
+    return { currentStreak: 0, currentStreakType: 'none', bestWinStreak: 0, worstLossStreak: 0 }
+  }
+
+  let bestWin = 0
+  let worstLoss = 0
+  let runWin = 0
+  let runLoss = 0
+  closed.forEach((t) => {
+    if (t.pnl > 0) {
+      runWin++
+      runLoss = 0
+      bestWin = Math.max(bestWin, runWin)
+    } else {
+      runLoss++
+      runWin = 0
+      worstLoss = Math.max(worstLoss, runLoss)
+    }
+  })
+
+  // Current streak from the end
+  const last = closed[closed.length - 1]
+  const currentType: 'win' | 'loss' = last.pnl > 0 ? 'win' : 'loss'
+  let current = 0
+  for (let i = closed.length - 1; i >= 0; i--) {
+    const isWin = closed[i].pnl > 0
+    if ((currentType === 'win' && isWin) || (currentType === 'loss' && !isWin)) current++
+    else break
+  }
+
+  return {
+    currentStreak: current,
+    currentStreakType: currentType,
+    bestWinStreak: bestWin,
+    worstLossStreak: worstLoss,
+  }
+}
+
+export function detectRevengeTrades(trades: Trade[], windowMs = 10 * 60 * 1000): Trade[] {
+  const closed = trades.filter((t) => t.status === 'CLOSED' && t.exitDateTime)
+  const sorted = [...closed].sort(
+    (a, b) => new Date(a.entryDateTime).getTime() - new Date(b.entryDateTime).getTime()
+  )
+  const revengeFlag: Trade[] = []
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1]
+    const curr = sorted[i]
+    if (prev.pnl < 0 && prev.exitDateTime) {
+      const gap =
+        new Date(curr.entryDateTime).getTime() - new Date(prev.exitDateTime).getTime()
+      if (gap > 0 && gap <= windowMs) {
+        revengeFlag.push(curr)
+      }
+    }
+  }
+  return revengeFlag
 }
 
 function formatChartDate(dateStr: string): string {

@@ -10,7 +10,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 const schema = z.object({
-  email: z.string().email('Enter a valid email'),
+  identifier: z.string().min(1, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
 })
 
@@ -62,17 +62,17 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1.5">
-              Email
+              Email or Username
             </label>
             <input
-              {...register('email')}
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
+              {...register('identifier')}
+              type="text"
+              autoComplete="username"
+              placeholder="you@example.com or username"
               className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors"
             />
-            {errors.email && (
-              <p className="mt-1 text-xs text-loss">{errors.email.message}</p>
+            {errors.identifier && (
+              <p className="mt-1 text-xs text-loss">{errors.identifier.message}</p>
             )}
           </div>
 

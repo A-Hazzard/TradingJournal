@@ -2,6 +2,16 @@ export type Direction = 'LONG' | 'SHORT'
 export type TradeStatus = 'OPEN' | 'CLOSED'
 export type AssetClass = 'forex' | 'indices' | 'stocks' | 'crypto' | 'commodities' | 'futures'
 
+export type EmotionTag =
+  | 'confident' | 'focused' | 'neutral' | 'anxious'
+  | 'frustrated' | 'fomo' | 'revenge' | 'bored' | 'greedy'
+
+export type ProcessGrade = 'A' | 'B' | 'C' | 'D' | 'F'
+
+export type MistakeType =
+  | 'early_exit' | 'late_entry' | 'oversized'
+  | 'no_stop' | 'broke_rules' | 'chased'
+
 export type Trade = {
   id: string
   ticker: string
@@ -25,6 +35,10 @@ export type Trade = {
   pnlPercent: number
   rMultiple?: number | null
   holdingDurationMs?: number
+  // ── Psychology fields ──────────────────────────────
+  emotionTag?: EmotionTag | null
+  processGrade?: ProcessGrade | null
+  mistakeType?: MistakeType | null
 }
 
 export type TradeFilters = {

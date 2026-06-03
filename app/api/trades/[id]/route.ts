@@ -99,7 +99,30 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     // ============================================================================
     // STEP 2: Parse request body
     // ============================================================================
-    const body: Partial<TradeDocument> = await req.json()
+    const rawBody: Partial<TradeDocument> = await req.json()
+    
+    // Whitelist user-submitted fields to prevent mass assignment
+    const body: Partial<TradeDocument> = {}
+    if (rawBody.ticker !== undefined) body.ticker = rawBody.ticker
+    if (rawBody.assetClass !== undefined) body.assetClass = rawBody.assetClass
+    if (rawBody.direction !== undefined) body.direction = rawBody.direction
+    if (rawBody.status !== undefined) body.status = rawBody.status
+    if (rawBody.entryDateTime !== undefined) body.entryDateTime = rawBody.entryDateTime
+    if (rawBody.entryPrice !== undefined) body.entryPrice = rawBody.entryPrice
+    if (rawBody.exitDateTime !== undefined) body.exitDateTime = rawBody.exitDateTime
+    if (rawBody.exitPrice !== undefined) body.exitPrice = rawBody.exitPrice
+    if (rawBody.quantity !== undefined) body.quantity = rawBody.quantity
+    if (rawBody.stopLoss !== undefined) body.stopLoss = rawBody.stopLoss
+    if (rawBody.takeProfit !== undefined) body.takeProfit = rawBody.takeProfit
+    if (rawBody.commission !== undefined) body.commission = rawBody.commission
+    if (rawBody.fees !== undefined) body.fees = rawBody.fees
+    if (rawBody.tags !== undefined) body.tags = rawBody.tags
+    if (rawBody.setup !== undefined) body.setup = rawBody.setup
+    if (rawBody.journalNotes !== undefined) body.journalNotes = rawBody.journalNotes
+    if (rawBody.screenshot !== undefined) body.screenshot = rawBody.screenshot
+    if (rawBody.emotionTag !== undefined) body.emotionTag = rawBody.emotionTag
+    if (rawBody.processGrade !== undefined) body.processGrade = rawBody.processGrade
+    if (rawBody.mistakeType !== undefined) body.mistakeType = rawBody.mistakeType
 
     // ============================================================================
     // STEP 3: Connect to database

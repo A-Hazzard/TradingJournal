@@ -24,6 +24,25 @@ const tradeSchema = new Schema(
     pnlPercent: { type: Number, default: 0 },
     rMultiple: { type: Number, default: null },
     holdingDurationMs: { type: Number, default: null },
+    // ── Psychology ──────────────────────────────────────────────────────────
+    emotionTag: {
+      type: String,
+      enum: ['confident', 'focused', 'neutral', 'anxious', 'frustrated', 'fomo', 'revenge', 'bored', 'greedy', null],
+      default: null,
+    },
+    processGrade: {
+      type: String,
+      enum: ['A', 'B', 'C', 'D', 'F', null],
+      default: null,
+    },
+    mistakeType: {
+      type: String,
+      enum: ['early_exit', 'late_entry', 'oversized', 'no_stop', 'broke_rules', 'chased', null],
+      default: null,
+    },
+    // ── Import tracking ─────────────────────────────────────────────────────
+    importedFrom: { type: String, default: null },
+    importBatchId: { type: Schema.Types.ObjectId, ref: 'ImportLog', default: null },
   },
   {
     timestamps: true,

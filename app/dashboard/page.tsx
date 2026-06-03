@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Activity, TrendingUp, Target, Calendar as CalendarIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Activity, TrendingUp, Target, Calendar as CalendarIcon, Share2 } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { KpiCard } from '@/components/ui/KpiCard'
+import { ShareModal } from '@/components/ui/ShareModal'
 import { PnlAreaChart } from '@/components/charts/PnlAreaChart'
 import { DailyBarChart } from '@/components/charts/DailyBarChart'
 import { RadarScoreChart } from '@/components/charts/RadarScoreChart'
@@ -36,6 +37,15 @@ export default function DashboardPage() {
   const now = new Date()
   const [calYear, setCalYear] = useState(now.getFullYear())
   const [calMonth, setCalMonth] = useState(now.getMonth())
+  const [shareOpen, setShareOpen] = useState(false)
+  const [username, setUsername] = useState('trader')
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((user) => { if (user?.username) setUsername(user.username) })
+      .catch(() => {})
+  }, [])
 
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const monthStats = getMonthlyCalendarData(trades, calYear, calMonth)
@@ -54,7 +64,19 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Header title="Dashboard" subtitle="Performance overview" />
+      <Header
+        title="Dashboard"
+        subtitle="Performance overview"
+        actions={
+          <button
+            onClick={() => setShareOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-alt border border-border text-xs font-medium text-text-secondary hover:text-text-primary hover:border-accent/40 transition-colors"
+          >
+            <Share2 size={13} />
+            Share
+          </button>
+        }
+      />
 
       {status === 'loading' ? (
         <DashboardSkeleton />
@@ -189,6 +211,12 @@ export default function DashboardPage() {
 
         </div>
       )}
+
+      <ShareModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        username={username}
+      />
     </div>
   )
 }

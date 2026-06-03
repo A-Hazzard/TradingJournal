@@ -198,7 +198,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
         close: close ? Number(close) : null,
         volume: volume ? Math.floor(volume) : 0,
       }
-    }).filter((c: any) => c.open !== null && c.high !== null && c.low !== null && c.close !== null)
+    }).filter((c: { open: number | null; high: number | null; low: number | null; close: number | null }) => c.open !== null && c.high !== null && c.low !== null && c.close !== null)
 
     const duration = Date.now() - startTime
     if (duration > 1000) console.warn(`[Candles GET] Slow: ${duration}ms`)

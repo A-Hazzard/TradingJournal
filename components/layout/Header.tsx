@@ -11,6 +11,7 @@ import { addToast } from '@/store/uiSlice'
 interface Props {
   title: string
   subtitle?: string
+  actions?: React.ReactNode
 }
 
 type HeaderUser = {
@@ -28,7 +29,7 @@ type HeaderNotification = {
   createdAt: string
 }
 
-export function Header({ title, subtitle }: Props) {
+export function Header({ title, subtitle, actions }: Props) {
   // === State & Hooks ===
   const dispatch = useAppDispatch()
   
@@ -154,6 +155,7 @@ export function Header({ title, subtitle }: Props) {
 
       {/* Action controls */}
       <div className="flex items-center gap-3 relative">
+        {actions}
         {/* Search toggle */}
         <button
           onClick={() => setSearchOpen(true)}

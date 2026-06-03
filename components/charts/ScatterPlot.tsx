@@ -1,12 +1,13 @@
 'use client'
 
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts'
+import type { TooltipProps } from 'recharts'
 import type { ScatterPoint } from '@/types/chart'
 import { formatCurrency } from '@/lib/formatters'
 
 interface Props { data: ScatterPoint[]; height?: number }
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: TooltipProps<number, number>) {
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload as ScatterPoint
   return (

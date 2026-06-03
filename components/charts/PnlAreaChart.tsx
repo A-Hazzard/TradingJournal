@@ -4,12 +4,13 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts'
+import type { TooltipProps } from 'recharts'
 import type { CumulativePnlPoint } from '@/types/chart'
 import { formatCurrency } from '@/lib/formatters'
 
 interface Props { data: CumulativePnlPoint[]; height?: number }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
   const cum = payload[0]?.value as number
   return (

@@ -12,6 +12,18 @@ const journalSchema = new Schema(
     },
     dailyGoal: { type: String, default: '' },
     lessonLearned: { type: String, default: '' },
+    // ── Psychology ──────────────────────────────────────────────────────────
+    preSessionChecklist: {
+      type: {
+        sleptWell: { type: Boolean, default: false },
+        focused: { type: Boolean, default: false },
+        reviewedPlan: { type: Boolean, default: false },
+        notDistracted: { type: Boolean, default: false },
+        acceptedRisk: { type: Boolean, default: false },
+      },
+      default: null,
+    },
+    mentalScore: { type: Number, min: 1, max: 10, default: null },
   },
   {
     timestamps: true,

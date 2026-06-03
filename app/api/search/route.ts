@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
     // STEP 1: Parse and validate query string
     // ============================================================================
     const { searchParams } = new URL(req.url)
-    const query = searchParams.get('q')?.trim() ?? ''
+    const rawQuery = searchParams.get('q')?.trim() ?? ''
+    const query = rawQuery.slice(0, 100)
     const userId = req.headers.get('x-user-id')
 
     if (!userId) {
@@ -36,7 +37,8 @@ export async function GET(req: NextRequest) {
     // ============================================================================
     // STEP 3: Execute searches concurrently with limits
     // ============================================================================
-    const regex = new RegExp(query, 'i')
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(escapedQuery, 'i')
 
     const [trades, journals] = await Promise.all([
       TradeModel.find({

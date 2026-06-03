@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { useAppDispatch, useAppSelector } from '@/store'
 import { fetchTrades, createTrade, updateTradeAsync, selectAllTrades, selectTradesStatus } from '@/store/tradesSlice'
@@ -15,8 +14,11 @@ import { addToast } from '@/store/uiSlice'
 import { computePnl } from '@/lib/calculations'
 import { formatCurrency } from '@/lib/formatters'
 import { ALL_TAGS, ALL_SETUPS, ASSET_CLASSES, COMMON_PAIRS } from '@/lib/constants'
-import { Save, X } from 'lucide-react'
+import { Save, X, ChevronDown, ChevronUp } from 'lucide-react'
 import DateTimePicker from '@/components/ui/DateTimePicker'
+import { EmotionPicker } from '@/components/ui/EmotionPicker'
+import { ProcessGradePicker } from '@/components/ui/ProcessGradePicker'
+import type { EmotionTag, ProcessGrade, MistakeType } from '@/types/trade'
 
 const schema = z.object({
   assetClass: z.enum(['forex', 'indices', 'stocks', 'crypto', 'commodities', 'futures']),
@@ -121,6 +123,31 @@ function AddTradeContent() {
   const tradeStatus = watch('status')
   const tags = watch('tags')
 
+  // ── Psychology state (uncontrolled — not in RHF schema, sent separately) ──
+  const [emotionTag, setEmotionTag] = useState<EmotionTag | null>(
+    (editTrade as unknown as { emotionTag?: EmotionTag | null })?.emotionTag ?? null
+  )
+  const [processGrade, setProcessGrade] = useState<ProcessGrade | null>(
+    (editTrade as unknown as { processGrade?: ProcessGrade | null })?.processGrade ?? null
+  )
+  const [mistakeType, setMistakeType] = useState<MistakeType | null>(
+    (editTrade as unknown as { mistakeType?: MistakeType | null })?.mistakeType ?? null
+  )
+  const [psychOpen, setPsychOpen] = useState(false)
+
+  // ── User playbook setups (merged into the setup dropdown) ──
+  const [userSetups, setUserSetups] = useState<string[]>([])
+  useEffect(() => {
+    fetch('/api/setups?activeOnly=true')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((setups: { name: string }[]) => setUserSetups(setups.map((s) => s.name)))
+      .catch(() => {})
+  }, [])
+  const setupOptions = useMemo(
+    () => Array.from(new Set([...userSetups, ...ALL_SETUPS])),
+    [userSetups]
+  )
+
   function toggleTag(tag: string) {
     const current = tags ?? []
     setValue('tags', current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag])
@@ -140,6 +167,10 @@ function AddTradeContent() {
       fees: data.fees ?? 0,
       pnl: 0,
       pnlPercent: 0,
+      // Psychology
+      emotionTag: emotionTag ?? null,
+      processGrade: processGrade ?? null,
+      mistakeType: processGrade && ['C','D','F'].includes(processGrade) ? (mistakeType ?? null) : null,
     }
 
     if (editId) {
@@ -354,7 +385,7 @@ function AddTradeContent() {
               <label className="text-xs text-text-muted block mb-1.5">Setup *</label>
               <select {...register('setup')} className="input-base">
                 <option value="">Select setup…</option>
-                {ALL_SETUPS.map(s => <option key={s} value={s}>{s}</option>)}
+                {setupOptions.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {errors.setup && <p className="text-xs text-loss mt-1">Required</p>}
             </div>
@@ -381,6 +412,39 @@ function AddTradeContent() {
                 <RichTextEditor content={field.value} onChange={field.onChange} placeholder="Describe your entry reason, execution, and lessons..." />
               )}
             />
+          </div>
+
+          {/* Psychology — collapsible */}
+          <div className="card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setPsychOpen(o => !o)}
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-surface-alt transition-colors"
+            >
+              <div>
+                <h3 className="text-sm font-semibold text-text-primary">Psychology</h3>
+                <p className="text-xs text-text-muted mt-0.5">Emotion tag, process grade, mistake type — optional</p>
+              </div>
+              {psychOpen ? <ChevronUp size={16} className="text-text-muted" /> : <ChevronDown size={16} className="text-text-muted" />}
+            </button>
+
+            {psychOpen && (
+              <div className="px-5 pb-5 space-y-5 border-t border-border pt-4">
+                <div>
+                  <label className="text-xs font-medium text-text-muted block mb-2">How did you feel entering this trade?</label>
+                  <EmotionPicker value={emotionTag} onChange={setEmotionTag} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-muted block mb-2">Process Grade</label>
+                  <ProcessGradePicker
+                    grade={processGrade}
+                    mistakeType={mistakeType}
+                    onGradeChange={(g) => { setProcessGrade(g); if (!g || !['C','D','F'].includes(g)) setMistakeType(null) }}
+                    onMistakeChange={setMistakeType}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3">

@@ -61,8 +61,9 @@ export function generatePriceCandlesForTrade(trade: Trade): PriceCandle[] {
     const high = parseFloat((Math.max(open, close) + r3 * wickExtra).toFixed(2))
     const low = parseFloat((Math.min(open, close) - r4 * wickExtra).toFixed(2))
 
-    // Pin entry/exit candle prices to touch the actual levels
-    let finalOpen = open, finalClose = close, finalHigh = high, finalLow = low
+    const finalOpen = open
+    const finalClose = close
+    let finalHigh = high, finalLow = low
     if (i === entryMinute) {
       finalLow = Math.min(low, trade.entryPrice - 0.01)
       finalHigh = Math.max(high, trade.entryPrice + 0.01)

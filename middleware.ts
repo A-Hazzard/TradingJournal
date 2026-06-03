@@ -21,6 +21,12 @@ export async function middleware(request: NextRequest) {
 
     try {
       const payload = await verifyToken(token)
+      
+      // Guard admin APIs in middleware for defense in depth
+      if (pathname.startsWith('/api/admin') && payload.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+
       // Inject user info into request headers
       const requestHeaders = new Headers(request.headers)
       requestHeaders.set('x-user-id', payload.userId)
